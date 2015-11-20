@@ -1,19 +1,19 @@
 package main
 
 import (
-	"errors"
-	"strconv"
-	"fmt"
-	"encoding/hex"
 	"crypto/md5"
-	"time"
-	"strings"
-	"github.com/PuerkitoBio/goquery"
-	"log"
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-)
+	"encoding/hex"
+	"errors"
+	"fmt"
+	"log"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/PuerkitoBio/goquery"
+	_ "github.com/go-sql-driver/mysql"
+)
 
 var stmtSnapUser *sql.Stmt
 var stmtTopAnaswer *sql.Stmt
@@ -25,7 +25,7 @@ func snapUser() {
 	if err != nil {
 		panic(err)
 	}
-	defer stmtSnapUser.Close() 
+	defer stmtSnapUser.Close()
 
 	stmtTopAnaswer, err = db.Prepare(`INSERT INTO usertopanswers(sid, id, title, agree, date, answerid, link, ispost, noshare, len, summary)
 									VALUES(?,?,?,?,?,?,?,?,?,?,?)`)
@@ -41,7 +41,7 @@ func snapUser() {
 	}
 
 	log.Printf("sid:%d, finished:%d", sid, finished)
-	
+
 	if sid == 0 || finished == 1 {
 		sid++
 		if result, err := db.Exec("insert into snapshot_config(sid, startAt) values(?,?)", sid, time.Now()); err == nil {
@@ -52,37 +52,36 @@ func snapUser() {
 			log.Fatal("err:", err)
 		}
 	}
-	
+
 	var count int
 	err = db.QueryRow("select count(id) from users where id not in (select id from usersnapshots where sid=?) order by tid", sid).Scan(&count)
 	if err != nil {
 		panic(err)
 	}
-	
+
 	rows, err := db.Query("select id from users where id not in (select id from usersnapshots where sid=?) order by tid", sid)
 	if err != nil {
 		panic(err)
 	}
-	
+
 	log.Printf("%d users to be proccessed", count)
-	
+
 	routine := 15
 	var gpool GoroutinePool
 	gpool.Init(routine, count)
-	
+
 	for rows.Next() {
 		var id string
-		
+
 		rows.Scan(&id)
-		
+
 		log.Println(sid, id)
 
-		gpool.AddTask(func () error{
+		gpool.AddTask(func() error {
 			return doSnapshotSingleUser(sid, id)
 		})
 	}
 	rows.Close()
-
 
 	now := time.Now()
 	gpool.Start()
@@ -99,114 +98,114 @@ func snapUser() {
 
 	runTime := time.Now().Sub(now)
 	log.Println("usersnapshots task finished in ", runTime)
-	
+
 	doSavePage()
-	
+
 	gpool.Stop()
 }
 func doSnapshotSingleUser(sid int, id string) error {
-		resp := doPageRequest("http://www.zhihu.com/people/"+id)
-		doc, err:= goquery.NewDocumentFromResponse(resp)
-		if err != nil {
-			return err
-		}
-		
-		sidebar := doc.Find(".zu-main-sidebar .item")
-		followee := sidebar.Eq(0).Find("strong").Text()
-		follower := sidebar.Eq(1).Find("strong").Text()
-		
-		navbar := doc.Find(".profile-navbar .num")
-		ask := navbar.Eq(0).Text()
-		answer := navbar.Eq(1).Text()
-		post := navbar.Eq(2).Text()
-		fav := navbar.Eq(3).Text()
-		edits := navbar.Eq(4).Text()
-		
-		agree := doc.Find(".zm-profile-header-user-agree").Find("strong").Text()
-		thanks := doc.Find(".zm-profile-header-user-thanks").Find("strong").Text()
+	resp := doPageRequest("http://www.zhihu.com/people/" + id)
+	doc, err := goquery.NewDocumentFromResponse(resp)
+	if err != nil {
+		return err
+	}
 
-		name := doc.Find(".zm-profile-header-main .title-section .name").Text()
-		avatar, _ := doc.Find(".zm-profile-header-avatar-container .avatar").Attr("src")
-		description := doc.Find(".zm-profile-header-description .fold-item .content").Text()
-		
-		var sex interface{}
-		class, _ := doc.Find(".info-wrap .item .icon").Attr("class")
-		
-		g := strings.Split(class, "-")
-		gender := g[len(g)-1]
-		if gender == "female" {
-			sex = 0
-		} else if gender == "male" {
-			sex = 1
-		} else {
-			sex = nil
-		}
+	sidebar := doc.Find(".zu-main-sidebar .item")
+	followee := sidebar.Eq(0).Find("strong").Text()
+	follower := sidebar.Eq(1).Find("strong").Text()
 
-		if name == "" || avatar == "" {
-			return errors.New("no name or avatar found, retry")
-		}
+	navbar := doc.Find(".profile-navbar .num")
+	ask := navbar.Eq(0).Text()
+	answer := navbar.Eq(1).Text()
+	post := navbar.Eq(2).Text()
+	fav := navbar.Eq(3).Text()
+	edits := navbar.Eq(4).Text()
 
-		h := md5.New()
-		h.Write([]byte(id))
-		h.Write([]byte(name))
-		h.Write([]byte(gender))
-		h.Write([]byte(description))
-		hash := fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil)))
+	agree := doc.Find(".zm-profile-header-user-agree").Find("strong").Text()
+	thanks := doc.Find(".zm-profile-header-user-thanks").Find("strong").Text()
 
-		if result, err := db.Exec("UPDATE users set hash=?, name=?, avatar=?, sex=?, description=? WHERE id=? and hash !=?",
-			hash, name, avatar, sex, description, id, hash); err == nil {
-			if id, err := result.RowsAffected(); err == nil {
-				log.Println("RowsAffected : ", id)
-			}
-		} else {
-			log.Println("err:", err)
-			return err
+	name := doc.Find(".zm-profile-header-main .title-section .name").Text()
+	avatar, _ := doc.Find(".zm-profile-header-avatar-container .avatar").Attr("src")
+	description := doc.Find(".zm-profile-header-description .fold-item .content").Text()
+
+	var sex interface{}
+	class, _ := doc.Find(".info-wrap .item .icon").Attr("class")
+
+	g := strings.Split(class, "-")
+	gender := g[len(g)-1]
+	if gender == "female" {
+		sex = 0
+	} else if gender == "male" {
+		sex = 1
+	} else {
+		sex = nil
+	}
+
+	if name == "" || avatar == "" {
+		return errors.New("no name or avatar found, retry")
+	}
+
+	h := md5.New()
+	h.Write([]byte(id))
+	h.Write([]byte(name))
+	h.Write([]byte(gender))
+	h.Write([]byte(description))
+	hash := fmt.Sprintf("%s", hex.EncodeToString(h.Sum(nil)))
+
+	if result, err := db.Exec("UPDATE users set hash=?, name=?, avatar=?, sex=?, description=? WHERE id=? and hash !=?",
+		hash, name, avatar, sex, description, id, hash); err == nil {
+		if id, err := result.RowsAffected(); err == nil {
+			log.Println("RowsAffected : ", id)
 		}
-		
-		log.Printf("hash:%s, id:%s, gender:%s, sex=%d, avatar:%s", hash, id, gender, sex, avatar)
-	
-		now := time.Now()
-		log.Printf("sid:%d, followee:%s, follower:%s, ask:%s, answer:%s, post:%s, fav:%s, edits:%s, agree:%s, thanks:%s, date:%s",
-			 sid, followee, follower, ask, answer, post, fav, edits, agree, thanks, now)
-	
-		if result, err := stmtSnapUser.Exec(sid, id, followee, follower, ask, answer, post, fav, edits, agree, thanks, now); err==nil {
-	        if id, err := result.LastInsertId(); err == nil {
-	           	log.Println("insert id : ", id)
-			}
-		} else {
-			log.Println("err:", err)
-			return err
+	} else {
+		log.Println("err:", err)
+		return err
+	}
+
+	log.Printf("hash:%s, id:%s, gender:%s, sex=%d, avatar:%s", hash, id, gender, sex, avatar)
+
+	now := time.Now()
+	log.Printf("sid:%d, followee:%s, follower:%s, ask:%s, answer:%s, post:%s, fav:%s, edits:%s, agree:%s, thanks:%s, date:%s",
+		sid, followee, follower, ask, answer, post, fav, edits, agree, thanks, now)
+
+	if result, err := stmtSnapUser.Exec(sid, id, followee, follower, ask, answer, post, fav, edits, agree, thanks, now); err == nil {
+		if id, err := result.LastInsertId(); err == nil {
+			log.Println("insert id : ", id)
 		}
-		
-		answerNum, _ := strconv.Atoi(answer)
-		return doSnapAnswer(sid, id, answerNum)
+	} else {
+		log.Println("err:", err)
+		return err
+	}
+
+	answerNum, _ := strconv.Atoi(answer)
+	return doSnapAnswer(sid, id, answerNum)
 }
 
-func doSnapAnswer(sid int, id string, answer int) error{
+func doSnapAnswer(sid int, id string, answer int) error {
 	var err error
-	page := answer/20+1
-	
+	page := answer/20 + 1
+
 	var shouldBreak bool
-	for i:=1; i<=page; i++ {
+	for i := 1; i <= page; i++ {
 		url := fmt.Sprintf("http://www.zhihu.com/people/%s/answers?order_by=vote_num&page=%d", id, i)
 		log.Printf("doSnapAnswer...sid:%d, url:%s", sid, url)
 		resp := doPageRequest(url)
-		
-		doc, err:= goquery.NewDocumentFromResponse(resp)
+
+		doc, err := goquery.NewDocumentFromResponse(resp)
 		if err != nil {
 			return err
 		}
-		
-		doc.Find(".zm-profile-section-list .zm-item").EachWithBreak(func(i int, s *goquery.Selection) bool{
-			agree,_ := s.Find(".zm-item-vote .zm-item-vote-count").Attr("data-votecount")
 
-			agreeNum ,_ := strconv.Atoi(agree)
+		doc.Find(".zm-profile-section-list .zm-item").EachWithBreak(func(i int, s *goquery.Selection) bool {
+			agree, _ := s.Find(".zm-item-vote .zm-item-vote-count").Attr("data-votecount")
+
+			agreeNum, _ := strconv.Atoi(agree)
 			if agreeNum < 250 {
 				log.Printf("%d agree, not enough.", agreeNum)
 				shouldBreak = true
 				return false
 			}
-			
+
 			link, _ := s.Find(".question_link").Attr("href")
 			link = fmt.Sprintf("http://zhihu.com%s", link)
 			l := strings.Split(link, "/")
@@ -230,7 +229,7 @@ func doSnapAnswer(sid int, id string, answer int) error{
 			*/
 			date := time.Now()
 			log.Println("date:", date)
-			
+
 			//re, _ := regexp.Compile("(\\n|\\<[\\s\\S]+?\\>)")
 			//summary = re.ReplaceAllString(summary, "")
 			if len(summary) >= 12 {
@@ -243,11 +242,10 @@ func doSnapAnswer(sid int, id string, answer int) error{
 			ispost := 1
 			//log.Printf("sid:%d, id:%s, date:%s, answerid:%s, agree:%s, title:%s, link:%s, ispost, noshare:%d, length:%d, summary:%s",
 			//			sid, id, date, answerid, agree, title, link, ispost, noshare, length, string(summary))
-			
-			
+
 			if result, err := stmtTopAnaswer.Exec(sid, id, title, agree, date, answerid, link, ispost, noshare, length, string(summary)); err == nil {
 				if lastInsertId, err := result.LastInsertId(); err == nil {
-		           	log.Println("stmtTopAnaswer lastInsertId:", lastInsertId)
+					log.Println("stmtTopAnaswer lastInsertId:", lastInsertId)
 				}
 			} else {
 				log.Println("stmtTopAnaswer err:", err)
@@ -255,9 +253,9 @@ func doSnapAnswer(sid int, id string, answer int) error{
 			}
 			return true
 		})
-		
+
 		if shouldBreak {
-			break;
+			break
 		}
 	}
 

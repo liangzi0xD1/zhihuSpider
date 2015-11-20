@@ -1,45 +1,44 @@
 package main
 
 import (
-	"os"
 	"html/template"
+	"log"
+	"os"
 	"strings"
 	"time"
-	"log"
 )
 
 type PageContent struct {
-	Id string
-	Name string
-	Sid int
-	Title string
-	Agree int
+	Id       string
+	Name     string
+	Sid      int
+	Title    string
+	Agree    int
 	Answerid string
-	Link string
-	Ispost int
-	Noshare int
-	Length int
-	Summary string
-	Avatar string
+	Link     string
+	Ispost   int
+	Noshare  int
+	Length   int
+	Summary  string
+	Avatar   string
 }
 
-
-func doSavePage() error{
+func doSavePage() error {
 	log.Println("doSavePage...")
-	
+
 	var startAt string
 	err := db.QueryRow(`select startAt from snapshot_config where sid = (select max(sid) from snapshot_config where  finished=1)`).Scan(&startAt)
 	if err != nil {
 		return err
 	}
-	
+
 	loc, _ := time.LoadLocation("Local")
 	startAtTime, _ := time.Parse("2006-01-02 15:04:05", startAt)
 	startAtTime = startAtTime.In(loc)
 
 	hour := startAtTime.Hour()
 	log.Println(startAt, startAtTime, loc.String(), hour)
-	
+
 	num := 1
 	limit := 32
 	yesterdayPage := false
@@ -57,19 +56,19 @@ func doSavePage() error{
 		return err
 	}
 	defer rows.Close()
-	
+
 	day := strings.Split(startAtTime.Format(time.RFC3339), "T")[0]
 
 	postTitle := "近日精选 "
-	fileName := day+"-today"+".md"
+	fileName := day + "-today" + ".md"
 	if yesterdayPage {
 		postTitle = "昨日精选 "
-		fileName = day+"-yesterday"+".md"
+		fileName = day + "-yesterday" + ".md"
 	}
-	
+
 	const tpl = `title: {{.PTitle}}
 date: {{.Date}}
-tags: 
+tags:
 ---
 #### 本期答案精选
 
@@ -88,11 +87,11 @@ tags:
 	contents := []PageContent{}
 	for rows.Next() {
 		var c PageContent
-		
+
 		rows.Scan(&c.Id, &c.Name, &c.Sid, &c.Title, &c.Agree, &c.Answerid, &c.Link, &c.Ispost, &c.Noshare, &c.Length, &c.Summary, &c.Avatar)
-		
+
 		log.Printf("id:%s, name:%s, sid:%d, title:%s, agree:%d, answerid:%s, link:%s, ispost:%d, noshare:%d, length:%d, summary:%s, avatar:%s",
-					c.Id, c.Name, c.Sid, c.Title, c.Agree, c.Answerid, c.Link, c.Ispost, c.Noshare, c.Length, c.Summary, c.Avatar)
+			c.Id, c.Name, c.Sid, c.Title, c.Agree, c.Answerid, c.Link, c.Ispost, c.Noshare, c.Length, c.Summary, c.Avatar)
 		c.Summary = strings.TrimRight(strings.TrimLeft(c.Summary, "\n"), "\n")
 		contents = append(contents, c)
 	}
@@ -102,22 +101,22 @@ tags:
 		return err
 	}
 	defer file.Close()
-	
+
 	type Data struct {
-		PTitle string
-		Date string
+		PTitle   string
+		Date     string
 		Contents []PageContent
 	}
 	var data Data
-	data.PTitle = postTitle+day
+	data.PTitle = postTitle + day
 	data.Date = day
 	data.Contents = contents
-	
+
 	err = t.Execute(file, data)
 	if err != nil {
 		return err
 	}
-	
+
 	log.Println("savePage done")
 	return err
 }

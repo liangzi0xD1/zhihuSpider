@@ -1,18 +1,19 @@
 package main
 
 import (
-	"os"
-	_ "github.com/go-sql-driver/mysql"
 	"database/sql"
-	"net/http"
-	"github.com/robfig/cron"
-	_ "net/http/pprof"
 	"io"
-	"time"
 	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/robfig/cron"
 )
 
-func doPageRequest(url string) *http.Response{
+func doPageRequest(url string) *http.Response {
 	client := &http.Client{}
 
 	cookie := "z_c0=QUJBTWVwa0dfd2dYQUFBQVlRSlZUZGpBY0ZZMTljMUktSDJkclJ0VFZsaUxUSm1XRTBpOWNRPT0=|1447637976|da89e3b90ac1b614221cd48e2832e20e04c0949b"
@@ -52,16 +53,16 @@ func main() {
 	log.SetOutput(w)
 
 	log.Println("go working...at", time.Now())
-	
+
 	//snapUser()
 	doSavePage()
 	//go snapAnswer()
 	log.Println("creating cron task...")
 	c := cron.New()
-	c.AddFunc("0 12 8,20 * * * ", func () {
+	c.AddFunc("0 12 8,20 * * * ", func() {
 		snapUser()
 	})
 	c.Start()
-	
+
 	log.Println(http.ListenAndServe("0.0.0.0:4000", nil))
 }

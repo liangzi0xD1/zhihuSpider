@@ -34,7 +34,7 @@ var db *sql.DB
 
 func main() {
 	var err error
-	db, err = sql.Open("mysql", "root:123456@tcp(192.168.33.10:3306)/zhihu?charset=utf8")
+	db, err = sql.Open("mysql", "root:y1w2j35217@tcp(localhost:3306)/zhihu?charset=utf8")
 	if err != nil {
 		panic(err)
 	}
@@ -54,9 +54,7 @@ func main() {
 
 	log.Println("go working...at", time.Now())
 
-	//snapUser()
-	doSavePage()
-	//go snapAnswer()
+	snapUser()
 	log.Println("creating cron task...")
 	c := cron.New()
 	c.AddFunc("0 12 8,20 * * * ", func() {

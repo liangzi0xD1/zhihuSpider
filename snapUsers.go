@@ -37,7 +37,7 @@ func snapUser() {
 	var sid, finished int
 	err = db.QueryRow("select sid, finished from snapshot_config order by tid desc limit 1").Scan(&sid, &finished)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	log.Printf("sid:%d, finished:%d", sid, finished)
@@ -66,7 +66,7 @@ func snapUser() {
 
 	log.Printf("%d users to be proccessed", count)
 
-	routine := 15
+	routine := 8
 	var gpool GoroutinePool
 	gpool.Init(routine, count)
 
@@ -228,7 +228,6 @@ func doSnapAnswer(sid int, id string, answer int) error {
 			date := time.Unix(timestamp, 8)
 			*/
 			date := time.Now()
-			log.Println("date:", date)
 
 			//re, _ := regexp.Compile("(\\n|\\<[\\s\\S]+?\\>)")
 			//summary = re.ReplaceAllString(summary, "")
@@ -244,8 +243,8 @@ func doSnapAnswer(sid int, id string, answer int) error {
 			//			sid, id, date, answerid, agree, title, link, ispost, noshare, length, string(summary))
 
 			if result, err := stmtTopAnaswer.Exec(sid, id, title, agree, date, answerid, link, ispost, noshare, length, string(summary)); err == nil {
-				if lastInsertId, err := result.LastInsertId(); err == nil {
-					log.Println("stmtTopAnaswer lastInsertId:", lastInsertId)
+				if _, err := result.LastInsertId(); err == nil {
+		           	//log.Println("stmtTopAnaswer lastInsertId:", lastInsertId)
 				}
 			} else {
 				log.Println("stmtTopAnaswer err:", err)

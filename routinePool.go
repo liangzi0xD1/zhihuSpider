@@ -51,9 +51,9 @@ func (self *GoroutinePool) routine(i int) {
 			if err == nil {
 				break
 			}
-			log.Println("task retrying...", retry)
-			time.Sleep(2 * time.Second)
 			retry--
+			log.Printf("goroutine %d retrying...%d chance left", i, retry)
+			time.Sleep(2 * time.Second)
 		}
 
 		self.result <- err

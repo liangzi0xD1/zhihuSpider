@@ -52,7 +52,7 @@ func (self *GoroutinePool) routine(i int) {
 				break
 			}
 			retry--
-			log.Printf("goroutine %d retrying...%d chance left", i, retry)
+			log.Printf("goroutine %d retrying...%d chance left, err:%s", i, retry, err)
 			time.Sleep(2 * time.Second)
 		}
 

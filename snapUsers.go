@@ -66,7 +66,7 @@ func snapUser() {
 
 	log.Printf("%d users to be proccessed", count)
 
-	routine := 8
+	routine := 5
 	var gpool GoroutinePool
 	gpool.Init(routine, count)
 

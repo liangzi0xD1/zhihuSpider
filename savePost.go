@@ -4,6 +4,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -70,13 +71,16 @@ func doSavePage() error {
 date: {{.Date}}
 tags:
 ---
-#### 本期答案精选
+### 本期答案精选
 
 <!-- more -->
 
 {{range .Contents}}
-**[{{.Title}}]({{.Link}})** *{{.Agree}}* 新增赞同
-**[{{.Name}}](http://zhihu.com/people/{{.Id}})**: {{.Summary}}
+#### [{{.Title}}]({{.Link}})
+<div align="left">
+![{{.Id}}]({{.Avatar}})
+</div>
+**[{{.Name}}](http://zhihu.com/people/{{.Id}})**: (*{{.Agree}}* 新增赞同){{.Summary}}
 {{end}}`
 
 	t, err := template.New("post").Parse(tpl)
@@ -93,6 +97,8 @@ tags:
 		log.Printf("id:%s, name:%s, sid:%d, title:%s, agree:%d, answerid:%s, link:%s, ispost:%d, noshare:%d, length:%d, summary:%s, avatar:%s",
 			c.Id, c.Name, c.Sid, c.Title, c.Agree, c.Answerid, c.Link, c.Ispost, c.Noshare, c.Length, c.Summary, c.Avatar)
 		c.Summary = strings.TrimRight(strings.TrimLeft(c.Summary, "\n"), "\n")
+		re := regexp.MustCompile("https://*.zhimg.com")
+		c.Avatar = re.ReplaceAllString(c.Avatar, "http://avatar.wanzhihu.com")
 		contents = append(contents, c)
 	}
 

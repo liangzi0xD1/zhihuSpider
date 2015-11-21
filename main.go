@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -62,5 +63,6 @@ func main() {
 	})
 	c.Start()
 
-	log.Println(http.ListenAndServe("0.0.0.0:4000", nil))
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	log.Println(http.ListenAndServe("0.0.0.0:"+string(4000+r.Intn(100)), nil))
 }

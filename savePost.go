@@ -71,17 +71,10 @@ func doSavePage() error {
 date: {{.Date}}
 tags:
 ---
-### 本期答案精选
 
-<!-- more -->
-
-{{range .Contents}}
-#### [{{.Title}}]({{.Link}})
-<div align="left">
-![{{.Id}}]({{.Avatar}})
-</div>
-**[{{.Name}}](http://zhihu.com/people/{{.Id}})**: (*{{.Agree}}* 新增赞同){{.Summary}}
-{{end}}`
+<ul>
+{{range .Contents}}<li><div style="height:160px"><h3><a href="{{.Link}}">{{.Title}}</a></h3><p><a href="http://zhihu.com/people/{{.Id}}"><img src="{{.Avatar}}" align="left"></a><span style="display:block;padding-left:120px">**[{{.Name}}](http://zhihu.com/people/{{.Id}})**: (*{{.Agree}}* 新增赞同){{.Summary}}</span></p></div></li>{{end}}
+</ul>`
 
 	t, err := template.New("post").Parse(tpl)
 	if err != nil {
@@ -97,7 +90,7 @@ tags:
 		log.Printf("id:%s, name:%s, sid:%d, title:%s, agree:%d, answerid:%s, link:%s, ispost:%d, noshare:%d, length:%d, summary:%s, avatar:%s",
 			c.Id, c.Name, c.Sid, c.Title, c.Agree, c.Answerid, c.Link, c.Ispost, c.Noshare, c.Length, c.Summary, c.Avatar)
 		c.Summary = strings.TrimRight(strings.TrimLeft(c.Summary, "\n"), "\n")
-		re := regexp.MustCompile("https://*.zhimg.com")
+		re := regexp.MustCompile("https://.*.zhimg.com")
 		c.Avatar = re.ReplaceAllString(c.Avatar, "http://avatar.wanzhihu.com")
 		contents = append(contents, c)
 	}

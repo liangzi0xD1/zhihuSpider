@@ -8,6 +8,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -64,6 +65,7 @@ func main() {
 	})
 	c.Start()
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	log.Println(http.ListenAndServe("0.0.0.0:"+string(4000+r.Intn(100)), nil))
+	rand.Seed( time.Now().UTC().UnixNano())
+	port := strconv.Itoa(4000+rand.Intn(100))
+	log.Println(http.ListenAndServe("0.0.0.0:"+port, nil))
 }

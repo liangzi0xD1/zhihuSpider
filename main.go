@@ -56,8 +56,8 @@ func main() {
 
 	log.Println("go working...at", time.Now())
 
-	//snapUser()
-	doSavePage()
+	snapUser()
+	//doSavePage()
 	log.Println("creating cron task...")
 	c := cron.New()
 	c.AddFunc("0 12 8,20 * * * ", func() {

@@ -64,7 +64,9 @@ func doSavePage() error {
 	}
 	defer rows.Close()
 
-	day := strings.Split(startAtTime.Format(time.RFC3339), "T")[0]
+	daytime := strings.Split(startAtTime.Format(time.RFC3339), "+")[0]
+	day := strings.Split(daytime, "T")[0]
+	date := strings.Replace(daytime, "T", " ", -1)
 
 	path := "source/_posts/"
 	postTitle := "近日精选 "
@@ -108,7 +110,7 @@ func doSavePage() error {
 
 	log.Println(len(contents))
 	postPage := fmt.Sprintf("title: %s\n", postTitle + day)
-	postPage += fmt.Sprintf("date: %s\n", day)
+	postPage += fmt.Sprintf("date: %s\n", date)
 	postPage += fmt.Sprintf("---\n")
 	for k1, v := range contents {
 		postPage += fmt.Sprintf("<h3 id='%s'><a href='%s'>%s</a></h3>", v.Title, v.QuestionLink, v.Title)
@@ -128,9 +130,9 @@ func doSavePage() error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
 	file.WriteString(postPage)
+	file.Close()
 
 	log.Println("savePage done")
 	

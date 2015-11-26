@@ -119,7 +119,9 @@ func doSavePage() error {
 			log.Println("answers:", k1, k2)
 			postPage += fmt.Sprintf("<a href='http://zhihu.com/people/%s'>", a.Id)
 			postPage += fmt.Sprintf("<img src='%s' align='left'></a>", a.Avatar)
-			postPage += fmt.Sprintf("<span>**[%s](http://zhihu.com/people/%s)**: (*%d*![](http://7xojdu.com1.z0.glb.clouddn.com/agree.png)) %s[[阅读全文]](%s)</span>", a.Name, a.Id, a.Agree, a.Summary, a.Link)
+			postPage += fmt.Sprintf("<span>**[%s](http://zhihu.com/people/%s)**:", a.Name, a.Id)
+			postPage += fmt.Sprintf(" (*%d*<img id='agreelogo' src='http://7xojdu.com1.z0.glb.clouddn.com/agree.png'>)", a.Agree)
+			postPage += fmt.Sprintf(" %s[[阅读全文]](%s)</span>", a.Summary, a.Link)
 			postPage += fmt.Sprintf("<div style='clear: both; margin-bottom: 16px;'></div>")
 		}
 		postPage += fmt.Sprintf("</div>")

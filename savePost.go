@@ -54,11 +54,11 @@ func doSavePage() error {
 		yesterdayPage = true
 	}
 
-	rows, err := db.Query(`select b.id, u.name, b.title, b.agree-a.agree agree, b.answerid, b.link, b.ispost, b.noshare, b.len, b.summary, u.avatar
+	rows, err := db.Query(`select b.id, u.name, b.title, b.agree, b.answerid, b.link, b.ispost, b.noshare, b.len, b.summary, u.avatar
 									from zhihu.usertopanswers a
 									INNER JOIN zhihu.usertopanswers b on b.id=a.id and b.answerid = a.answerid and b.sid=a.sid+?
 									INNER JOIN zhihu.users u on u.id = a.id
-									where b.sid=(select max(sid) from zhihu.snapshot_config where finished=1) order by agree desc limit ?`, num, limit)
+									where a.sid=(select max(sid) from zhihu.snapshot_config where finished=1)-? order by b.agree-a.agree desc limit ?`, num, limit)
 	if err != nil {
 		return err
 	}
@@ -119,7 +119,7 @@ func doSavePage() error {
 			log.Println("answers:", k1, k2)
 			postPage += fmt.Sprintf("<a href='http://zhihu.com/people/%s'>", a.Id)
 			postPage += fmt.Sprintf("<img src='%s' align='left'></a>", a.Avatar)
-			postPage += fmt.Sprintf("<span>**[%s](http://zhihu.com/people/%s)**: (*%d* 新增赞同)%s [阅读全文](%s)</span>", a.Name, a.Id, a.Agree, a.Summary, a.Link)
+			postPage += fmt.Sprintf("<span>**[%s](http://zhihu.com/people/%s)**: (*%d*![](http://7xojdu.com1.z0.glb.clouddn.com/agree.png)) %s[[阅读全文]](%s)</span>", a.Name, a.Id, a.Agree, a.Summary, a.Link)
 			postPage += fmt.Sprintf("<div style='clear: both; margin-bottom: 16px;'></div>")
 		}
 		postPage += fmt.Sprintf("</div>")
@@ -137,7 +137,9 @@ func doSavePage() error {
 	log.Println("savePage done")
 	
 	err = deploy()
-	log.Println(err)
+	if err == nil {
+		log.Println("deploy done")
+	}
 	return err
 }
 

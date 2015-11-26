@@ -58,7 +58,7 @@ func doSavePage() error {
 									from zhihu.usertopanswers a
 									INNER JOIN zhihu.usertopanswers b on b.id=a.id and b.answerid = a.answerid and b.sid=a.sid+?
 									INNER JOIN zhihu.users u on u.id = a.id
-									where a.sid=(select max(sid) from zhihu.snapshot_config where finished=1)-? order by b.agree-a.agree desc limit ?`, num, limit)
+									where a.sid=(select max(sid) from zhihu.snapshot_config where finished=1)-? order by b.agree-a.agree desc limit ?`, num, num, limit)
 	if err != nil {
 		return err
 	}
